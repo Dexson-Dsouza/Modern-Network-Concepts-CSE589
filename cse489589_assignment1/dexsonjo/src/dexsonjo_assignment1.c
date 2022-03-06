@@ -20,13 +20,11 @@
  *
  * This contains the main function. Add further description here....
  */
-#include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "../include/global.h"
 #include "../include/logger.h"
-
-using namespace std;
 
 /**
  * main function
@@ -40,10 +38,10 @@ int main(int argc, char **argv)
 	/*Init. Logger*/
 	cse4589_init_log(argv[2]);
 
-	/* Clear LOGFILE*/
-    fclose(fopen(LOGFILE, "w"));
+	/*Clear LOGFILE*/
+	fclose(fopen(LOGFILE, "w"));
 
 	/*Start Here*/
-	
+
 	return 0;
 }
