@@ -267,15 +267,17 @@ int startServer(int port_no)
 						{
 							char *IP = (char *)malloc(sizeof(char) * strlen(argvs[1]));
 							strncpy(IP, argvs[1], strlen(argvs[1]));
-							if (validate_ip(argvs[1]) && checkinServerList(IP, &server_list))
+							// printf("%d \n",validate_ip(checkinServerList(argvs[1], &server_list));
+							if (validate_ip(argvs[1]) == 1 && checkinServerList(argvs[1], &server_list) == 1)
 							{
 								cse4589_print_and_log("[BLOCKED:SUCCESS]\n");
-
 								list_clients *temp = server_list;
 								int list_id = 1;
 								while (temp != NULL)
 								{
-									if (temp->is_block == 1 && strncmp(IP, temp->blocked_by, strlen(IP)) == 0)
+
+									printf("%s ==== %s .... %d ....%d\n",IP,temp->blocked_by,temp->is_block,strncmp(IP, temp->blocked_by, strlen(temp->blocked_by)));
+									if (temp->is_block == 1 && strncmp(IP, temp->blocked_by, strlen(temp->blocked_by)) == 0)
 									{
 										cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", list_id, temp->hostname, temp->IPaddress, temp->port_num);
 										list_id++;
@@ -362,7 +364,7 @@ int startServer(int port_no)
 
 							char *msg_to_send = (char *)calloc(strlen(buffer) + 1, sizeof(char));
 							strncpy(msg_to_send, buffer, strlen(buffer));
-							// printf("Client se nt me: %s\n", msg_to_send);
+							printf("Client se nt me: %s\n", msg_to_send);
 							int i = 0;
 							char *token = strtok(msg_to_send, " ");
 							char *argv_client[500];
@@ -450,16 +452,20 @@ int startServer(int port_no)
 							}
 							else if (strcmp(argv_client[0], "BLOCK") == 0)
 							{
+
 								char delimiter[] = " ";
 								char *firstWord, *context;
 								firstWord = strtok_r(buffer, delimiter, &context);
 								char *remainder;
 								remainder = context;
 								list_clients *temp1 = server_list;
+								printf("%s wants to block %s\n", ip_addr_client, remainder);
+
 								while (temp1 != NULL)
 								{
 									if (strcmp(temp1->IPaddress, remainder) == 0)
 									{
+										printf("%s had blocked %s\n", ip_addr_client, remainder);
 										temp1->is_block = 1;
 										// this blocked by client
 										strcpy(temp1->blocked_by, ip_addr_client);
@@ -473,12 +479,15 @@ int startServer(int port_no)
 								char *firstWord, *remainder, *context;
 								firstWord = strtok_r(buffer, delimiter, &context);
 								remainder = context;
-								list_clients *temp1 = server_list;
+								list_clients *temp = server_list;
+								printf("%s wants to unblock %s\n", ip_addr_client, remainder);
 								while (temp != NULL)
 								{
-									if (strcmp(temp1->IPaddress, remainder) == 0)
+									if (strcmp(temp->IPaddress, remainder) == 0)
 									{
+										printf("%s had unblocked %s\n", ip_addr_client, remainder);
 										temp->is_block = 0;
+										memset(temp->blocked_by, '\0', strlen(temp->blocked_by));
 										break;
 									}
 									temp = temp->next;
@@ -1101,7 +1110,7 @@ int startClient(int port_no)
 							// 	printf("blocked \n");
 							// }
 							// printf("%s+++%s\n", IP, argvs[1]);
-							if (validate_ip(IP) && check_client_list(IP, &mylist_clients) == 1 && (isAlreadyBlocked(argvs[1], &mylist_clients) == 1))
+							if (validate_ip(IP) && check_client_list(IP, &mylist_clients) == 1 && (isAlreadyBlocked(IP, &mylist_clients) == 1))
 							{
 								if (send(server, message_to_client, strlen(message_to_client), 0) != strlen(message_to_client))
 								{
@@ -1111,7 +1120,7 @@ int startClient(int port_no)
 								client_info *temp = mylist_clients;
 								while (temp != NULL)
 								{
-									if (strcmp(IP, temp->IPaddress) == 0)
+									if (strcmp(argvs[1], temp->IPaddress) == 0)
 									{
 										temp->is_block = 0;
 									}
