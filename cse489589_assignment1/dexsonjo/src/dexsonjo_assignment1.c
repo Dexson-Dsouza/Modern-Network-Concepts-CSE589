@@ -90,7 +90,7 @@ int check_client_list(char *IPaddr, client_info **head);
 void sendToIP(char ipaddress[256], list_clients **list, char messageToSend[256]);
 int isAlreadyBlocked(char *IP, client_info **head);
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 	cse4589_init_log(argv[2]);
 	fclose(fopen(LOGFILE, "w"));
@@ -241,7 +241,7 @@ int startServer(int port_no)
 						if (strcmp(argvs[0], "AUTHOR") == 0)
 						{
 							cse4589_print_and_log("[AUTHOR:SUCCESS]\n");
-							cse4589_print_and_log("I, Dexson, have read and understood the course academic integrity policy.\n");
+							cse4589_print_and_log("I, dexsonjo, have read and understood the course academic integrity policy.\n");
 							cse4589_print_and_log("[AUTHOR:END]\n");
 						}
 
@@ -276,7 +276,7 @@ int startServer(int port_no)
 								while (temp != NULL)
 								{
 
-									printf("%s ==== %s .... %d ....%d\n",IP,temp->blocked_by,temp->is_block,strncmp(IP, temp->blocked_by, strlen(temp->blocked_by)));
+									printf("%s ==== %s .... %d ....%d\n", IP, temp->blocked_by, temp->is_block, strncmp(IP, temp->blocked_by, strlen(temp->blocked_by)));
 									if (temp->is_block == 1 && strncmp(IP, temp->blocked_by, strlen(temp->blocked_by)) == 0)
 									{
 										cse4589_print_and_log("%-5d%-35s%-20s%-8d\n", list_id, temp->hostname, temp->IPaddress, temp->port_num);
@@ -603,7 +603,7 @@ int connect_to_host(char *ip_server, int client_port, int server_port)
 
 	fdsocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (fdsocket < 0)
-		perror("Failed to create socket");
+		return -1;
 
 	bzero(&remote_server_addr, sizeof(remote_server_addr));
 	remote_server_addr.sin_family = AF_INET;
@@ -611,13 +611,13 @@ int connect_to_host(char *ip_server, int client_port, int server_port)
 	remote_server_addr.sin_port = htons(server_port);
 
 	if (connect(fdsocket, (struct sockaddr *)&remote_server_addr, sizeof(remote_server_addr)) < 0)
-		perror("Connect failed");
+		return -1;
 	char portNo[100];
 	memset(portNo, 0, sizeof(portNo));
 	sprintf(portNo, "%d", client_port);
 	if (send(fdsocket, portNo, strlen(portNo), 0) == strlen(portNo) < 0)
 	{
-		printf("Done failed\n");
+		return -1;
 	}
 	fflush(stdout);
 	// cse4589_print_and_log((char *)"[%s:SUCCESS]\n", "LOGIN");
@@ -864,7 +864,7 @@ int startClient(int port_no)
 	memset((char *)&temp_udp, 0, sizeof(temp_udp));
 	temp_udp.sin_family = AF_INET;
 	temp_udp.sin_port = htons(2000);
-	inet_pton(AF_INET, "8.8.8.8", &temp_udp.sin_addr);
+	inet_pton(AF_INET, "10.12.110.57", &temp_udp.sin_addr);
 	int flag = connect(socketfd, (struct sockaddr *)&temp_udp, sizeof(temp_udp));
 	int flag2 = getsockname(socketfd, (struct sockaddr *)&temp_udp, (unsigned int *)&len);
 	inet_ntop(AF_INET, &(temp_udp.sin_addr), ip_str, sizeof(temp_udp));
@@ -930,7 +930,7 @@ int startClient(int port_no)
 						if (strcmp(argvs[0], "AUTHOR") == 0)
 						{
 							cse4589_print_and_log("[AUTHOR:SUCCESS]\n");
-							cse4589_print_and_log("I, Dexson, have read and understood the course academic integrity policy.\n");
+							cse4589_print_and_log("I, dexsonjo, have read and understood the course academic integrity policy.\n");
 							cse4589_print_and_log("[AUTHOR:END]\n");
 						}
 
@@ -961,39 +961,53 @@ int startClient(int port_no)
 						}
 						else if (strcmp(argvs[0], "LOGIN") == 0)
 						{
-							cse4589_print_and_log("[LOGIN:SUCCESS]\n");
-							cse4589_print_and_log("[LOGIN:END]\n");
+
 							char *ip = (char *)malloc(sizeof(char) * strlen(argvs[1]));
 							strncpy(ip, argvs[1], strlen(argvs[1]));
 							// printf("%s",argvs[2]);
-							if (validate_ip(ip))
+							int port_valid = 1;
+							if (argvs[2] == NULL)
+							{
+								port_valid = 0;
+							}
+							if (validate_ip(ip) && port_valid == 1)
 							{
 
 								// printf("Helllo inside LOGIN ------\n");
 								server = connect_to_host(argvs[1], port_no, atoi(argvs[2]));
-								char *buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
-								memset(buffer, '\0', BUFFER_SIZE);
-								mylist_clients == NULL;
-								// int tp = recv(server,buffer,BUFFER_SIZE,0);
-								// printf("TP---->\n",tp);
-								if (recv(server, buffer, BUFFER_SIZE, 0) >= 0)
+								if (server < 0)
 								{
-									// printf("Helllo from here-----%s",buffer);
-									// printf("Server responded:\n %s", buffer);
-									login_status_client = 1;
-									add_client_list(buffer, &mylist_clients);
-									fflush(stdout);
+									cse4589_print_and_log("[LOGIN:ERROR]\n");
+									cse4589_print_and_log("[LOGIN:END]\n");
 								}
-								FD_SET(server, &master_list);
-								if (server > fd_max)
+								else
 								{
-									fd_max = server;
+									cse4589_print_and_log("[LOGIN:SUCCESS]\n");
+									cse4589_print_and_log("[LOGIN:END]\n");
+									char *buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
+									memset(buffer, '\0', BUFFER_SIZE);
+									mylist_clients == NULL;
+									// int tp = recv(server,buffer,BUFFER_SIZE,0);
+									// printf("TP---->\n",tp);
+									if (recv(server, buffer, BUFFER_SIZE, 0) >= 0)
+									{
+										// printf("Helllo from here-----%s",buffer);
+										// printf("Server responded:\n %s", buffer);
+										login_status_client = 1;
+										add_client_list(buffer, &mylist_clients);
+										fflush(stdout);
+									}
+									FD_SET(server, &master_list);
+									if (server > fd_max)
+									{
+										fd_max = server;
+									}
 								}
 							}
 							else
 							{
 								cse4589_print_and_log("[LOGIN:ERROR]\n");
-								cse4589_print_and_log("[LOGIN:ERROR]\n");
+								cse4589_print_and_log("[LOGIN:END]\n");
 							}
 						}
 						else if (strcmp(argvs[0], "REFRESH") == 0)
@@ -1134,6 +1148,13 @@ int startClient(int port_no)
 								cse4589_print_and_log("[UNBLOCK:ERROR]\n");
 								cse4589_print_and_log("[UNBLOCK:END]\n");
 							}
+						}
+						else if (strcmp(argvs[0], "EXIT") == 0)
+						{
+							cse4589_print_and_log("[EXIT:SUCCESS]\n");
+							close(server);
+							cse4589_print_and_log("[EXIT:END]\n");
+							exit(0);
 						}
 					}
 					else
